@@ -80,6 +80,7 @@ def listar_eventos():
 
 @app.route('/registrar_participante', methods=['POST'])
 def registrar_participante():
+    eventos_hoy = obtener_eventos_hoy() 
     nombre = request.form.get("nombre").strip().title()
     evento_nombre = request.form.get("evento")  # Nombre del evento desde el formulario
         # Validación básica para el nombre del evento
