@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbarita Lara</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="shortcut icon" href="{{url_for('static', filename='images/ico.png') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   
+
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/bllogo.png') }}" alt="Imagen">
+
+    </header>
+    <h1 class="montserrat-bold ">Bienvenidos</h1>
+    <p class="montserrat-medium">Por favor ingresa tu nombre</p>
+    <div class="main-container">
+        <form class="form" method="post" action="/registrar_participante">
+            <label class="montserrat-regular" for="nombre">Nombre: </label>
+            <input type="text" id="nombre" name="nombre" required>
+            <label class="montserrat-regular" for="evento">Evento:</label>
+            <div class="group">
+                <!-- <input type="radio" id="evento_colbun" name="evento" value="Colbun">
+                <label class="montserrat-regular" for="evento_colbun">Colbun</label>
+        
+                <input  type="radio" id="evento_sofofa" name="evento" value="Sofofa">
+                <label class="montserrat-regular" for="evento_sofofa">Sofofa</label> -->
+               
+                {% if eventos %}
+                    {% for evento in eventos %}
+                        <input type="radio" id="evento_{{ evento.id }}" name="evento" value="{{ evento.nombre }}" checked>
+                        <label class="montserrat-regular" for="evento_{{ evento.id }}">{{ evento.nombre }}</label>
+                    {% endfor %}
+                {% else %}
+                    <p>No hay eventos programados para hoy.</p>
+                {% endif %}
+            
+                
+            </div>
+            
+            <button type="submit">Registrarme</button>
+        </form>
+    </div>
+    {% if mensaje %}
+        <script>
+            Swal.fire({
+                title: "{{'¡Genial 😊!' if mensaje_tipo == 'success' else '¡Error 🥲!'}}",
+                text: "{{ mensaje }}",
+                icon: "{{ mensaje_tipo }}",  
+                confirmButtonText: 'Aceptar'
+            });
+        </script>
+    {% endif %}
+</body>
+</html>

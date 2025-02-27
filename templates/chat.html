@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat con LLM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+            overflow-y: auto;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+            max-width: 80%;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .llm-message {
+            align-self: flex-start;
+            background-color: #eeeeee;
+        }
+
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            padding-bottom: 3rem;
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px; /* Igual que .chat-container */
+            /* background-color: white; */
+            /* border-top: 1px solid #ccc; */
+            z-index: 10;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box">
+            <!-- Mensajes de chat aquí -->
+        </div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." />
+            <button id="send-button">Enviar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const userInput = document.getElementById("user-input");
+        const sendButton = document.getElementById("send-button");
+    
+        function appendMessage(message, sender) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("chat-message", sender === "user" ? "user-message" : "llm-message");
+            messageElement.innerHTML = message;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll al final
+        }
+    
+        function appendTypingIndicator() {
+            const typingIndicator = document.createElement("div");
+            typingIndicator.classList.add("chat-message", "llm-message");
+            typingIndicator.innerText = "Escribiendo...";
+            typingIndicator.id = "typing-indicator";
+            chatBox.appendChild(typingIndicator);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById("typing-indicator");
+            if (typingIndicator) typingIndicator.remove();
+        }
+    
+        // Mensaje inicial del bot
+        setTimeout(() => {
+            appendMessage("Hola Barbarita, ¿qué hacemos hoy?", "llm");
+        }, 1000); // Retraso de 1 segundo al iniciar
+    
+        function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (userMessage === "") return;
+    
+            appendMessage(userMessage, "user");
+            userInput.value = "";
+    
+            appendTypingIndicator(); // Mostrar "Escribiendo..."
+    
+            setTimeout(async () => {
+                removeTypingIndicator(); // Quitar "Escribiendo..." antes de responder
+    
+                // Verificar si el mensaje es una solicitud de sorteo
+                if (userMessage.toLowerCase().includes("genera un sorteo")) {
+                    const response = await fetch('/sorteo');
+                    const data = await response.json();
+    
+                    if (data.ganadores) {
+                        let listaGanadores = "<ul>";
+                        data.ganadores.forEach(ganador => {
+                            listaGanadores += `<li>${ganador}</li>`;
+                        });
+                        listaGanadores += "</ul>";
+                        appendMessage(`Claro, aquí tienes los ganadores: ${listaGanadores}`, "llm");
+                    } else {
+                        appendMessage("Lo siento, no hay suficientes participantes para el sorteo.", "llm");
+                    }
+                } else {
+                    appendMessage("Lo siento, no entiendo esa solicitud. ¿Puedes intentar de nuevo?", "llm");
+                }
+            }, 1500); // Simulación de tiempo de respuesta (1.5s)
+        }
+    
+        // Evento para el botón de enviar
+        sendButton.addEventListener("click", sendMessage);
+    
+        // Evento para enviar con la tecla Enter
+        userInput.addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Evita el envío del formulario y refresco de la página
+                sendMessage();
+            }
+        });
+    </script>
+    
+    
+    <!-- <script>
+        const chatBox = document.getElementById("chat-box");
+        const userInput = document.getElementById("user-input");
+        const sendButton = document.getElementById("send-button");
+
+        function appendMessage(message, sender) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("chat-message");
+            messageElement.classList.add(sender === "user" ? "user-message" : "llm-message");
+            messageElement.innerText = message;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll al final
+        }
+
+        sendButton.addEventListener("click", async () => {
+            const userMessage = userInput.value.trim();
+            if (userMessage === "") return;
+
+            appendMessage(userMessage, "user");
+            userInput.value = "";
+
+            // Verificar si el mensaje es una solicitud de sorteo
+            if (userMessage.toLowerCase().includes("genera un sorteo")) {
+                const response = await fetch('/sorteo');
+                const data = await response.json();
+
+                if (data.ganadores) {
+                    const ganadores = data.ganadores.join(", ");
+                    appendMessage(`Claro, aquí tienes los ganadores: ${ganadores}`, "llm");
+                } else {
+                    appendMessage(`Lo siento, no hay suficientes participantes para el sorteo.`, "llm");
+                }
+            } else {
+                appendMessage("Lo siento, no entiendo esa solicitud. ¿Puedes intentar de nuevo?", "llm");
+            }
+        });
+    </script> -->
+
+</body>
+</html>

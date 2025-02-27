@@ -1,0 +1,726 @@
+<!-- templates/tombola.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="{{url_for('static', filename='images/ico.png') }}" type="image/x-icon">
+  <title>Tómbola Virtual</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .participant-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .participant-info a {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .participants-section {
+      margin-bottom: 20px;
+    }
+    
+    .participants-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    
+    .participant-item {
+      padding: 5px 10px;
+      margin: 5px 0;
+      background-color: white;
+      border-radius: 3px;
+      border-left: 3px solid #4CAF50;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .tombola-section {
+      text-align: center;
+      margin-top: 30px;
+    }
+    
+    .tombola-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 0 auto 20px;
+    }
+    
+    .tombola {
+      width: 300px;
+      height: 300px;
+      background-color: rgba(231, 76, 60, 0.2);
+      border: 8px solid #e74c3c;
+      border-radius: 50%;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2), inset 0 0 50px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+      z-index: 1;
+    }
+    
+    .tombola-glass {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      top: 10px;
+      left: 10px;
+      background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 0.1) 10%,
+        rgba(200, 200, 200, 0) 60%
+      );
+      z-index: 3;
+      pointer-events: none;
+    }
+    
+    .tombola-handle {
+      position: absolute;
+      width: 60px;
+      height: 50px;
+      background-color: #c0392b;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 0 0 10px 10px;
+      z-index: 4;
+    }
+    
+    .tombola-handle:before {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 15px;
+      background-color: #e74c3c;
+      bottom: 0;
+      left: 15px;
+      border-radius: 10px 10px 0 0;
+    }
+    
+    .ticket {
+      position: absolute;
+      padding: 2px 8px;
+      background-color: white;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100px;
+      opacity: 0.9;
+      user-select: none;
+    }
+    
+    .winner-display {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .winner-name {
+      font-size: 1rem;
+      /* font-weight: bold; */
+      color: #333;
+      margin: 10px 0;
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #f39c12;
+      animation: fall 3s linear infinite;
+      opacity: 0;
+    }
+    
+    @keyframes fall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
+    .spinning {
+      animation: spin 3s linear infinite;
+    }
+    
+    .ticket.spinning {
+      animation: ticketSpin 3s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    
+    @keyframes ticketSpin {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin-left: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .reset-btn {
+      background-color: #3498db;
+    }
+
+    .reset-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .draw-btn {
+      background-color: #e74c3c;
+    }
+
+    .draw-btn:hover {
+      background-color: #c0392b;
+    }
+
+    .winners-history {
+      margin-top: 20px;
+    }
+
+    .winners-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+
+    .winner-item {
+      padding: 5px 10px;
+      margin: 5px 0;
+      background-color: white;
+      border-radius: 3px;
+      border-left: 3px solid #e74c3c;
+    }
+    
+    .highlight {
+      animation: highlight 1s ease-in-out;
+      z-index: 10;
+      font-size: 16px !important;
+      background-color: #f39c12 !important;
+      color: white !important;
+    }
+    
+    @keyframes highlight {
+      0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.5);
+      }
+    }
+    
+    .timestamp {
+      font-size: 12px;
+      color: #777;
+      margin-left: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tómbola Virtual</h1>
+    
+    <div class="participant-info">
+      <p>Total de participantes: <strong id="participant-count">0</strong></p>
+    </div>
+    
+    <!-- Lista de participantes -->
+    <div class="participants-section">
+      <h3>Participantes</h3>
+      <div class="participants-list" id="participants-list">
+        <!-- Los participantes se cargarán desde la API -->
+        <div id="no-participants-message">No hay participantes todavía</div>
+      </div>
+    </div>
+    
+    <!-- La tómbola -->
+    <div class="tombola-section">
+      <div class="tombola-container">
+        <div class="tombola" id="tombola">
+          <!-- Los tickets se agregarán aquí dinámicamente -->
+        </div>
+        <div class="tombola-glass"></div>
+        <div class="tombola-handle"></div>
+      </div>
+      <button id="draw-btn" class="draw-btn" disabled>¡Sortear!</button>
+      <button id="reset-btn" class="reset-btn">Reiniciar</button>
+      
+      <!-- Mostrar ganador -->
+      <div class="winner-display">
+        
+        <div id="winner" class="winner-name">--</div>
+      </div>
+      
+      <!-- Historial de ganadores -->
+      <div class="winners-history">
+        <h3>Historial de ganadores</h3>
+        <div class="winners-list" id="winners-list">
+          <!-- Los ganadores se cargarán desde la API -->
+          <div id="no-winners-message">No hay ganadores todavía</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementos del DOM
+      const drawBtn = document.getElementById('draw-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const participantsList = document.getElementById('participants-list');
+      const winnerDisplay = document.getElementById('winner');
+      const winnersList = document.getElementById('winners-list');
+      const participantCount = document.getElementById('participant-count');
+      const tombola = document.getElementById('tombola');
+      const noParticipantsMessage = document.getElementById('no-participants-message');
+      const noWinnersMessage = document.getElementById('no-winners-message');
+      
+      // Arrays para almacenar participantes y ganadores
+      let participants = [];
+      let tickets = [];
+      
+      // Función para cargar participantes desde la API
+      function loadParticipants() {
+        fetch('/api/participantes')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              participants = data.participantes;
+              updateParticipantsList();
+              createAllTickets();
+            } else {
+              console.error('Error al cargar participantes:', data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Error en la solicitud:', error);
+          });
+      }
+      
+      // Función para cargar ganadores desde la API
+      function loadWinners() {
+        fetch('/api/ganadores')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              updateWinnersList(data.ganadores);
+            } else {
+              console.error('Error al cargar ganadores:', data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Error en la solicitud:', error);
+          });
+      }
+      
+      // Función para crear un ticket en la tómbola
+      function createTicket(participant) {
+        const ticket = document.createElement('div');
+        ticket.className = 'ticket';
+        ticket.textContent = participant.nombre;
+        ticket.dataset.id = participant.id;
+        
+        // Posición aleatoria dentro de la tómbola
+        const angle = Math.random() * 360;
+        const distance = Math.random() * 100;
+        const x = 150 + distance * Math.cos(angle * Math.PI / 180);
+        const y = 150 + distance * Math.sin(angle * Math.PI / 180);
+        
+        ticket.style.left = `${x}px`;
+        ticket.style.top = `${y}px`;
+        ticket.style.transform = 'translate(-50%, -50%)';
+        
+        // Color aleatorio pastel para los tickets
+        const hue = Math.floor(Math.random() * 360);
+        ticket.style.backgroundColor = `hsl(${hue}, 80%, 90%)`;
+        ticket.style.borderLeft = `3px solid hsl(${hue}, 80%, 70%)`;
+        
+        tombola.appendChild(ticket);
+        tickets.push(ticket);
+        
+        // Animación para que el ticket "caiga" en la tómbola
+        ticket.animate([
+          { transform: 'translate(-50%, -150%)', opacity: 0 },
+          { transform: 'translate(-50%, -50%)', opacity: 1 }
+        ], {
+          duration: 500,
+          easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+        });
+        
+        return ticket;
+      }
+      
+      // Función para crear todos los tickets
+      function createAllTickets() {
+        // Limpiar la tómbola primero
+        while (tickets.length > 0) {
+          const ticket = tickets.pop();
+          tombola.removeChild(ticket);
+        }
+        
+        // Crear tickets para cada participante
+        participants.forEach(participant => {
+          createTicket(participant);
+        });
+      }
+      
+      // Función para actualizar la lista de participantes en el DOM
+      function updateParticipantsList() {
+        participantsList.innerHTML = '';
+        participantCount.textContent = participants.length;
+        
+        if (participants.length === 0) {
+          noParticipantsMessage.style.display = 'block';
+          participantsList.appendChild(noParticipantsMessage);
+          drawBtn.disabled = true;
+        } else {
+          noParticipantsMessage.style.display = 'none';
+          drawBtn.disabled = false;
+          
+          participants.forEach(participant => {
+            const item = document.createElement('div');
+            item.className = 'participant-item';
+            item.textContent = participant.nombre;
+            participantsList.appendChild(item);
+          });
+        }
+      }
+      
+      // Función para actualizar la lista de ganadores
+      function updateWinnersList(winners) {
+        winnersList.innerHTML = '';
+        
+        if (winners.length === 0) {
+          noWinnersMessage.style.display = 'block';
+          winnersList.appendChild(noWinnersMessage);
+        } else {
+          noWinnersMessage.style.display = 'none';
+          
+          winners.forEach((winner, index) => {
+            const item = document.createElement('div');
+            item.className = 'winner-item';
+            
+            const winnerName = document.createElement('span');
+            winnerName.textContent = winner.nombre;
+            
+            const timestamp = document.createElement('span');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date(winner.fecha_seleccion).toLocaleString();
+            
+            item.appendChild(winnerName);
+            item.appendChild(timestamp);
+            winnersList.appendChild(item);
+          });
+        }
+      }
+      
+      // Función para mover los tickets dentro de la tómbola
+      function shuffleTickets() {
+        tickets.forEach(ticket => {
+          const angle = Math.random() * 360;
+          const distance = Math.random() * 100;
+          const x = 150 + distance * Math.cos(angle * Math.PI / 180);
+          const y = 150 + distance * Math.sin(angle * Math.PI / 180);
+          
+          // Animar el movimiento
+          ticket.animate([
+            { left: ticket.style.left, top: ticket.style.top },
+            { left: `${x}px`, top: `${y}px` }
+          ], {
+            duration: 500,
+            easing: 'ease-out',
+            fill: 'forwards'
+          });
+          
+          ticket.style.left = `${x}px`;
+          ticket.style.top = `${y}px`;
+        });
+      }
+      
+      // // 
+      // 
+      
+      function drawWinners() {
+          if (participants.length < 10) {
+              alert("No hay suficientes participantes para el sorteo.");
+              return;
+          }
+
+          drawBtn.disabled = true; // Deshabilitar el botón durante el sorteo
+
+          // Iniciar la animación de la tómbola
+          tombola.classList.add('spinning');
+          tickets.forEach(ticket => ticket.classList.add('spinning'));
+
+          // Mezclar los tickets visualmente
+          const shuffleInterval = setInterval(shuffleTickets, 500);
+
+          // Seleccionar 10 ganadores de forma aleatoria sin repetir
+          setTimeout(() => {
+              clearInterval(shuffleInterval);
+              tombola.classList.remove('spinning');
+              tickets.forEach(ticket => ticket.classList.remove('spinning'));
+
+              let ganadores = [];
+              let participantesCopia = [...participants];
+
+              for (let i = 0; i < 10; i++) {
+                  const randomIndex = Math.floor(Math.random() * participantesCopia.length);
+                  ganadores.push(participantesCopia[randomIndex]);
+                  participantesCopia.splice(randomIndex, 1);
+              }
+
+              // Crear el contenedor de la tabla de ganadores
+              winnerDisplay.innerHTML = "<h2>¡Ganadores!</h2>";
+              const winnersTable = document.createElement("div");
+              winnersTable.classList.add("winners-grid"); // Se usará CSS para formatear
+
+              ganadores.forEach((ganador, index) => {
+                  const winnerItem = document.createElement("div");
+                  winnerItem.classList.add("winner-name");
+                  winnerItem.textContent = `${index + 1}. ${ganador.nombre}`;
+                  winnersTable.appendChild(winnerItem);
+
+                  // Resaltar el ticket ganador
+                  const winnerTicket = tickets.find(ticket => ticket.dataset.id == ganador.id);
+                  if (winnerTicket) {
+                      winnerTicket.classList.add('highlight');
+                  }
+              });
+
+              winnerDisplay.appendChild(winnersTable);
+
+              // Enviar los ganadores al backend para registrarlos
+              fetch('/api/seleccionar-ganadores', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ ganadores: ganadores.map(g => g.id) }),
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      loadWinners(); // Recargar la lista de ganadores
+
+                      setTimeout(() => {
+                          ganadores.forEach(ganador => {
+                              const winnerTicket = tickets.find(ticket => ticket.dataset.id == ganador.id);
+                              if (winnerTicket) {
+                                  tombola.removeChild(winnerTicket);
+                                  tickets = tickets.filter(ticket => ticket !== winnerTicket);
+                              }
+                          });
+
+                          // Eliminar a los ganadores de la lista local
+                          participants = participants.filter(p => !ganadores.some(g => g.id === p.id));
+                          updateParticipantsList();
+
+                          // Habilitar el botón si quedan participantes suficientes
+                          drawBtn.disabled = participants.length < 10;
+                      }, 2000);
+                  } else {
+                      console.error('Error al registrar ganadores:', data.error);
+                      drawBtn.disabled = false;
+                  }
+              })
+              .catch(error => {
+                  console.error('Error en la solicitud:', error);
+                  drawBtn.disabled = false;
+              });
+
+          }, 3000); // Tiempo de animación antes de revelar ganadores
+      }
+
+      
+      
+      // Función para crear el efecto de confeti
+      function createConfetti() {
+        const colors = ['#f39c12', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'];
+        
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.animationDelay = Math.random() * 3 + 's';
+          
+          document.body.appendChild(confetti);
+          
+          // Eliminar el confeti después de la animación
+          setTimeout(() => {
+            document.body.removeChild(confetti);
+          }, 3000);
+        }
+      }
+      
+      // Función para reiniciar la tómbola
+      function resetTombola() {
+        if (confirm('¿Estás seguro de que quieres reiniciar? Se restablecerán todos los ganadores.')) {
+          fetch('/api/reiniciar', {
+            method: 'POST',
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Recargar participantes y ganadores
+              loadParticipants();
+              loadWinners();
+              winnerDisplay.textContent = '--';
+            } else {
+              console.error('Error al reiniciar:', data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Error en la solicitud:', error);
+          });
+        }
+      }
+      
+      // Event listeners
+      drawBtn.addEventListener('click', drawWinners);
+      resetBtn.addEventListener('click', resetTombola);
+      
+      // Configurar actualización en tiempo real (polling)
+      function setupRealtimeUpdates() {
+        // Verificar nuevos participantes cada 5 segundos
+        setInterval(() => {
+          fetch('/api/participantes')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Si hay nuevos participantes, actualizamos
+                if (data.participantes.length !== participants.length) {
+                  // Encontrar nuevos participantes
+                  const existingIds = participants.map(p => p.id);
+                  const newParticipants = data.participantes.filter(p => !existingIds.includes(p.id));
+                  
+                  // Agregar nuevos participantes a la lista local
+                  participants = data.participantes;
+                  updateParticipantsList();
+                  
+                  // Crear tickets solo para los nuevos participantes
+                  newParticipants.forEach(participant => {
+                    createTicket(participant);
+                  });
+                }
+              }
+            })
+            .catch(error => {
+              console.error('Error al actualizar participantes:', error);
+            });
+        }, 5000);
+      }
+      
+      // Agitar la tómbola periódicamente
+      setInterval(() => {
+        if (participants.length > 1 && !tombola.classList.contains('spinning')) {
+          shuffleTickets();
+        }
+      }, 8000);
+      
+      // Cargar datos iniciales
+      loadParticipants();
+      // loadWinners();
+      console.log(participants);
+      // Configurar actualizaciones en tiempo real
+      setupRealtimeUpdates();
+    });
+  </script>
+</body>
+</html>

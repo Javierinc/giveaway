@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbarita Lara</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="shortcut icon" href="{{url_for('static', filename='images/ico.png') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   
+
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/bllogo.png') }}" alt="Imagen">
+    </header>
+
+    <h1 class="montserrat-bold">Registro de Eventos</h1>
+    <p class="montserrat-medium">Ingresa los datos del nuevo evento</p>
+
+    <!-- Formulario para registrar eventos -->
+    <div class="main-container">
+        <form class="form" method="post" action="/registrar_evento">
+            <label class="montserrat-regular" for="nombre_evento">Nombre del Evento:</label>
+            <input type="text" id="nombre_evento" name="nombre_evento" required>
+
+            <label class="montserrat-regular" for="fecha_evento">Fecha del Evento:</label>
+            <input type="date" id="fecha_evento" name="fecha_evento" required>
+
+            <label class="montserrat-regular" for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion" rows="3" required></textarea>
+
+            <button type="submit">Agregar Evento</button>
+        </form>
+    </div>
+
+    <!-- Script para mostrar alertas -->
+    {% if mensaje %}
+    <script>
+        Swal.fire({
+            title: "{{ '¡Genial 😊!' if mensaje_tipo == 'success' else '¡Error 🥲!' }}",
+            text: "{{ mensaje | safe }}",
+            icon: "{{ mensaje_tipo }}",
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
