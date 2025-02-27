@@ -12,10 +12,10 @@ app = Flask(__name__)
 
 
 crear_base_datos()
-eventos_hoy = obtener_eventos_hoy()
+
 @app.route('/')
 def formulario():
-    
+    eventos_hoy = obtener_eventos_hoy()
     return render_template("registro-participantes.html", eventos=eventos_hoy)
 
 @app.route('/sorteando')
