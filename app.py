@@ -18,10 +18,19 @@ def formulario():
     eventos_hoy = obtener_eventos_hoy()
     return render_template("registro-participantes.html", eventos=eventos_hoy)
 
+# @app.route('/sorteando')
+# def simular_sorteo():
+    
+#     return render_template("sorteo.html")
 @app.route('/sorteando')
 def simular_sorteo():
+    eventos_hoy = obtener_eventos_hoy()
     
-    return render_template("sorteo.html")
+    # Si hay eventos hoy, pasamos el primero como "evento actual"
+    evento_actual = eventos_hoy[0]['nombre'] if eventos_hoy else None
+
+    return render_template("sorteo.html", eventos=eventos_hoy, evento_actual=evento_actual)
+
 
 @app.route('/administrador')
 def registro_eventos():
@@ -112,24 +121,29 @@ def registrar_participante():
                            mensaje_tipo="success")
 
 
-@app.route('/participantes/<evento>', methods=['GET'])
+# @app.route('/participantes/<evento>', methods=['GET'])
+# def obtener_participantes(evento):
+#     evento_nombre = unquote(evento)
+#     if not evento:
+#         return jsonify({"message": "Debes proporcionar un evento"}), 400
+
+#     participantes = obtener_participantes_evento(evento_nombre)  # Obtener solo los participantes de ese evento
+#     return jsonify({"evento": evento_nombre, "participantes": participantes}), 200
+
+
+@app.route('/api/participantes/<evento>', methods=['GET'])
 def obtener_participantes(evento):
-    evento_nombre = unquote(evento)
-    if not evento:
-        return jsonify({"message": "Debes proporcionar un evento"}), 400
+    evento_nombre = unquote(evento).strip()  # Elimina espacios en blanco
+    if not evento_nombre:
+        return jsonify({"success": False, "message": "Debes proporcionar un evento"}), 400
 
-    participantes = obtener_participantes_evento(evento_nombre)  # Obtener solo los participantes de ese evento
-    return jsonify({"evento": evento_nombre, "participantes": participantes}), 200
+    participantes = obtener_participantes_evento(evento_nombre)
 
+    # ✅ Si la consulta devuelve None, lo convertimos en una lista vacía
+    if not participantes:
+        participantes = []
 
-@app.route('/api/participantes', methods=['GET'])
-def obtener_participante():
-    evento = "Sofofa"
-    if not evento:
-        return jsonify({"message": "Debes proporcionar un evento"}), 400
-
-    participantes = obtener_participantes_evento(evento)  # Obtener solo los participantes de ese evento
-    return jsonify({"success": True, "participantes": participantes})
+    return jsonify({"success": True, "participantes": participantes}), 200
 
 
 

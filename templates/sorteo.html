@@ -373,12 +373,15 @@
       // Arrays para almacenar participantes y ganadores
       let participants = [];
       let tickets = [];
+      const evento = "{{ evento_actual }}"; 
+      console.log("Evento: ", evento)
       
       // Función para cargar participantes desde la API
-      function loadParticipants() {
-        fetch('/api/participantes')
+      function loadParticipants(evento) {
+        fetch(`/api/participantes/${encodeURIComponent(evento)}`)
           .then(response => response.json())
           .then(data => {
+            console.log("Respuesta de la Api: ", data);
             if (data.success) {
               participants = data.participantes;
               updateParticipantsList();
@@ -584,7 +587,7 @@
               });
 
               winnerDisplay.appendChild(winnersTable);
-
+              createConfetti();
               // Enviar los ganadores al backend para registrarlos
               fetch('/api/seleccionar-ganadores', {
                   method: 'POST',
@@ -597,7 +600,6 @@
               .then(data => {
                   if (data.success) {
                       loadWinners(); // Recargar la lista de ganadores
-
                       setTimeout(() => {
                           ganadores.forEach(ganador => {
                               const winnerTicket = tickets.find(ticket => ticket.dataset.id == ganador.id);
@@ -645,12 +647,12 @@
           // Eliminar el confeti después de la animación
           setTimeout(() => {
             document.body.removeChild(confetti);
-          }, 3000);
+          }, 5000);
         }
       }
       
       // Función para reiniciar la tómbola
-      function resetTombola() {
+      function resetTombola(evento) {
         if (confirm('¿Estás seguro de que quieres reiniciar? Se restablecerán todos los ganadores.')) {
           fetch('/api/reiniciar', {
             method: 'POST',
@@ -659,7 +661,7 @@
           .then(data => {
             if (data.success) {
               // Recargar participantes y ganadores
-              loadParticipants();
+              loadParticipants(evento);
               loadWinners();
               winnerDisplay.textContent = '--';
             } else {
@@ -677,10 +679,10 @@
       resetBtn.addEventListener('click', resetTombola);
       
       // Configurar actualización en tiempo real (polling)
-      function setupRealtimeUpdates() {
+      function setupRealtimeUpdates(evento) {
         // Verificar nuevos participantes cada 5 segundos
         setInterval(() => {
-          fetch('/api/participantes')
+          fetch(`/api/participantes/${encodeURIComponent(evento)}`)
             .then(response => response.json())
             .then(data => {
               if (data.success) {
@@ -715,11 +717,11 @@
       }, 8000);
       
       // Cargar datos iniciales
-      loadParticipants();
+      loadParticipants(evento);
       // loadWinners();
       console.log(participants);
       // Configurar actualizaciones en tiempo real
-      setupRealtimeUpdates();
+      setupRealtimeUpdates(evento);
     });
   </script>
 </body>
